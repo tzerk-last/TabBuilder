@@ -317,16 +317,56 @@ function preflight(lang, frameworkId) {
 /**
  * @typedef {Object} InstallResult
  * @property {boolean}  ok
- * @property {string}   [error]       — user-facing message (no stack trace)
- * @property {string}   [manualCmd]   — command user can run to install manually
- * @property {boolean}  [isNetwork]   — true when failure was a network issue
+ * @property {string}   [error]       - user-facing message (no stack trace)
+ * @property {string}   [manualCmd]   - command user can run to install manually
+ * @property {boolean}  [isNetwork]   - true when failure was a network issue
  */
 
 /**
+ * Returns platform-specific manual commands for Python dependency installation.
+ * @returns {string}
+ */
+function formatPythonManualCommands() {
+  const macLinux = [
+    'python3 -m venv venv',
+    'source venv/bin/activate',
+    'pip install -r requirements.txt',
+  ].join('\n');
+
+  const windows = [
+    'python -m venv venv',
+    'venv\\Scripts\\activate',
+    'pip install -r requirements.txt',
+  ].join('\n');
+
+  return `macOS/Linux:\n${macLinux}\n\nWindows:\n${windows}`;
+}
+
+/**
+ * Parses pip output and returns a package-level failure if present.
+ * @param {string} raw
+ * @returns {{package: string, reason: string}|null}
+ */
+function parsePipPackageFailure(raw) {
+  const lines = raw.split('\n');
+  for (const line of lines) {
+    let match = line.match(/Could not find a version that satisfies the requirement\s+([^\s]+)/i);
+    if (match) {
+      return { package: match[1], reason: line.trim() };
+    }
+    match = line.match(/No matching distribution found for\s+([^\s]+)/i);
+    if (match) {
+      return { package: match[1], reason: line.trim() };
+    }
+  }
+  return null;
+}
+
+/**
  * Classifies a RunResult and builds an InstallResult for failures.
- * @param {string}    cmd
+ * @param {string} cmd
  * @param {RunResult} result
- * @param {string}    manualCmd
+ * @param {string} manualCmd
  * @returns {InstallResult}
  */
 function failResult(cmd, result, manualCmd) {
@@ -338,7 +378,7 @@ function failResult(cmd, result, manualCmd) {
       ok: false,
       isNetwork: true,
       manualCmd,
-      error: `La instalación tardó demasiado tiempo.\nPuedes instalar las dependencias manualmente:\n\n  ${manualCmd}`,
+      error: `La instalación tardó demasiado tiempo.\n\nComando ejecutado:\n${cmd}\n\nPuedes instalar las dependencias manualmente:\n\n${formatPythonManualCommands()}`,
     };
   }
 
@@ -347,7 +387,17 @@ function failResult(cmd, result, manualCmd) {
       ok: false,
       isNetwork: true,
       manualCmd,
-      error: `${networkErrorMessage(networkType, manualCmd)}\n\nPuedes instalar las dependencias manualmente:\n\n  ${manualCmd}`,
+      error: `${networkErrorMessage(networkType, manualCmd)}\n\nComando ejecutado:\n${cmd}\n\nPuedes instalar las dependencias manualmente:\n\n${formatPythonManualCommands()}`,
+    };
+  }
+
+  const pipFailure = parsePipPackageFailure(raw);
+  if (pipFailure) {
+    return {
+      ok: false,
+      isNetwork: false,
+      manualCmd,
+      error: `Failed package:\n${pipFailure.package}\n\nReason:\n${pipFailure.reason}\n\nCommand executed:\n${cmd}\n\nPIP output:\n${raw}\n\nManual install commands:\n${formatPythonManualCommands()}`,
     };
   }
 
@@ -362,8 +412,8 @@ function failResult(cmd, result, manualCmd) {
     isNetwork: false,
     manualCmd,
     error: relevant
-      ? `No fue posible instalar las dependencias.\n\nMotivo:\n${relevant}\n\nPuedes intentarlo manualmente:\n\n  ${manualCmd}`
-      : `No fue posible instalar las dependencias.\n\nPuedes intentarlo manualmente:\n\n  ${manualCmd}`,
+      ? `No fue posible instalar las dependencias.\n\nMotivo:\n${relevant}\n\nComando ejecutado:\n${cmd}\n\nManual install commands:\n${formatPythonManualCommands()}`
+      : `No fue posible instalar las dependencias.\n\nComando ejecutado:\n${cmd}\n\nManual install commands:\n${formatPythonManualCommands()}`,
   };
 }
 
@@ -437,10 +487,14 @@ async function installPython(ctx) {
     : path.join(projectPath, 'venv', 'bin', 'python');
 
   const pipExe = fs.existsSync(venvPython) ? venvPython : pyExe;
-  const manualCmd = `${pyExe} -m venv venv && ${pyExe} -m pip install -r requirements.txt`;
+  const manualCmd = process.platform === 'win32'
+    ? 'python -m venv venv && python -m pip install -r requirements.txt'
+    : 'python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt';
 
   // 3. Install requirements (no pip upgrade — just install)
-  onStep('Instalando dependencias…', `${pyExe} -m pip install -r requirements.txt`);
+  const pipCommand = `${pipExe} -m pip install -r requirements.txt`;
+  onStep('Instalando dependencias…', pipCommand);
+  logger.info(`Executing pip command: ${pipCommand}`);
   t = Date.now();
   const installResult = await run(
     pipExe,

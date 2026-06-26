@@ -173,7 +173,7 @@ def main():
 if __name__ == '__main__':
     main()
 `,
-      'requirements.txt': `django>=5.1\ngunicorn>=22.0\npython-dotenv>=1.0\n`,
+      'requirements.txt': `django>=4.2,<5\ngunicorn>=22.0\npython-dotenv>=1.0\n`,
       '.env.example':
 `SECRET_KEY=your-secret-key-here-replace-before-production
 DEBUG=True
