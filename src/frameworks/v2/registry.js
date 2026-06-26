@@ -61,6 +61,18 @@ const REGISTRY = {
     const { LaravelCleanOfficialGenerator } = require('./generators/laravel/OfficialGenerator');
     return new LaravelCleanOfficialGenerator();
   },
+  'spring-boot/mvc': () => {
+    const { SpringBootMvcOfficialGenerator } = require('./generators/spring-boot/OfficialGenerator');
+    return new SpringBootMvcOfficialGenerator();
+  },
+  'spring-boot/api': () => {
+    const { SpringBootApiOfficialGenerator } = require('./generators/spring-boot/OfficialGenerator');
+    return new SpringBootApiOfficialGenerator();
+  },
+  'spring-boot/clean': () => {
+    const { SpringBootCleanOfficialGenerator } = require('./generators/spring-boot/OfficialGenerator');
+    return new SpringBootCleanOfficialGenerator();
+  },
 };
 
 module.exports = { REGISTRY };

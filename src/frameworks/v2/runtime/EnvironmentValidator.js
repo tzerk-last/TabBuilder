@@ -12,7 +12,7 @@ const FRAMEWORK_TOOL_REQUIREMENTS = {
   angular:      [['node'], ['npm'], ['git'], ['ng']],
   laravel:      [['php'], ['composer'], ['git']],
   symfony:      [['php'], ['composer'], ['git']],
-  'spring-boot': [['java'], ['mvn', 'gradle'], ['git']],
+  'spring-boot': [['git'], ['curl', 'wget', 'spring'], ['unzip', 'spring']],
   quarkus:      [['java'], ['mvn', 'gradle'], ['git']],
   micronaut:    [['java'], ['mvn', 'gradle'], ['git']],
   fastapi:      [['uv', 'python'], ['git']],

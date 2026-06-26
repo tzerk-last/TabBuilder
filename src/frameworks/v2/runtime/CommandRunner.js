@@ -41,23 +41,28 @@ class CommandRunner {
 
   probe(exe, args = ['--version'], timeoutMs = 6000) {
     const env = this.buildEnv();
-    for (const shell of [false, true]) {
+
+    const tryProbe = (command, useShell) => {
       try {
-        const result = spawnSync(exe, args, {
-          stdio: 'pipe',
-          shell,
-          timeout: timeoutMs,
-          encoding: 'utf8',
-          env,
-        });
-        if (result.status === 0 && !result.error) {
+        const result = spawnSync(command, useShell ? { stdio: 'pipe', shell: true, timeout: timeoutMs, encoding: 'utf8', env } : { stdio: 'pipe', shell: false, timeout: timeoutMs, encoding: 'utf8', env }, useShell ? undefined : args);
+        if (result && result.status === 0 && !result.error) {
           return (result.stdout || result.stderr || '').trim().split('\n')[0] || exe;
         }
       } catch (_) {
         // ignore and try the next form
       }
-    }
-    return null;
+      return null;
+    };
+
+    const quotedArgs = args.map((arg) => {
+      if (/^[A-Za-z0-9_./:-]+$/.test(arg)) return arg;
+      return `"${String(arg).replace(/"/g, '\\"')}"`;
+    });
+
+    let result = tryProbe(exe, false);
+    if (result) return result;
+    result = tryProbe([exe, ...quotedArgs].join(' '), true);
+    return result;
   }
 
   resolveExecutable(candidates, args = ['--version'], timeoutMs = 6000) {

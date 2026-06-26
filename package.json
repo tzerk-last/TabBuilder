@@ -82,6 +82,7 @@
   },
   "scripts": {
     "lint": "eslint src",
+    "test": "node ./src/frameworks/v2/generators/spring-boot/OfficialGenerator.test.js",
     "package": "vsce package",
     "publish": "vsce publish"
   },
