@@ -1,7 +1,12 @@
 // @ts-check
 'use strict';
 
-const vscode = require('vscode');
+let vscode = null;
+try {
+  vscode = require('vscode');
+} catch (err) {
+  // Running outside VS Code (tests, scripts) - fall back to console.
+}
 
 /**
  * Singleton Output Channel logger.
@@ -17,18 +22,26 @@ class Logger {
 
   /** @returns {vscode.OutputChannel} */
   get channel() {
-    if (!this._channel) {
-      this._channel = vscode.window.createOutputChannel('Framework Project Builder');
+    if (vscode && vscode.window) {
+      if (!this._channel) {
+        this._channel = vscode.window.createOutputChannel('Framework Project Builder');
+      }
+      return this._channel;
     }
-    return this._channel;
+    return null;
   }
 
-  /** Writes a timestamped line to the output channel. */
+  /** Writes a timestamped line to the output channel or console. */
   _write(level, msg) {
     const elapsed = this._sessionStart
       ? `+${((Date.now() - this._sessionStart) / 1000).toFixed(1)}s`
       : new Date().toISOString().slice(11, 23);
-    this.channel.appendLine(`[${elapsed}] [${level}] ${msg}`);
+    const line = `[${elapsed}] [${level}] ${msg}`;
+    if (this.channel) {
+      this.channel.appendLine(line);
+    } else {
+      console.log(line);
+    }
   }
 
   /** Marks the start of a new generation session. */

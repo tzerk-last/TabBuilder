@@ -59,6 +59,21 @@ function writeFile(filePath, content) {
 }
 
 /**
+ * @param {string} projectPath
+ */
+function patchNestJsPackageJson(projectPath) {
+  const packageJsonPath = path.join(projectPath, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) return;
+
+  const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  pkg.scripts = pkg.scripts || {};
+  pkg.scripts.lint = 'eslint "{src,apps,libs,test}/**/*.ts" --fix';
+
+  fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
+  JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+}
+
+/**
  * @param {string} src
  * @param {string} dst
  */
@@ -235,6 +250,10 @@ async function buildProject(config) {
       writeFile(fullPath, resolve(rawContent || '', projectName));
       filesWritten.push(relPath);
       logger.debug(`  wrote: ${relPath}`);
+    }
+
+    if (frameworkId === 'nestjs') {
+      patchNestJsPackageJson(projectPath);
     }
 
     // ── 4. Architecture patterns (optional, additive, never fatal) ───────────

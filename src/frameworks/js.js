@@ -317,33 +317,31 @@ export class AppService {
   }
 }
 `,
-      'package.json':
-`{
-  "name": "{PROJECT_NAME}",
-  "version": "0.0.1",
-  "private": true,
-  "scripts": {
-    "start": "node dist/main",
-    "start:dev": "nest start --watch",
-    "build": "nest build",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
+      'package.json': JSON.stringify({
+  name: '{PROJECT_NAME}',
+  version: '0.0.1',
+  private: true,
+  scripts: {
+    start: 'node dist/main',
+    'start:dev': 'nest start --watch',
+    build: 'nest build',
+    lint: 'eslint "{src,apps,libs,test}/**/*.ts" --fix',
   },
-  "dependencies": {
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/core": "^10.0.0",
-    "@nestjs/platform-express": "^10.0.0",
-    "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+  dependencies: {
+    '@nestjs/common': '^10.0.0',
+    '@nestjs/core': '^10.0.0',
+    '@nestjs/platform-express': '^10.0.0',
+    'reflect-metadata': '^0.2.0',
+    rxjs: '^7.8.1',
   },
-  "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
-    "@nestjs/schematics": "^10.0.0",
-    "@types/express": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
-  }
-}
-`,
+  devDependencies: {
+    '@nestjs/cli': '^10.0.0',
+    '@nestjs/schematics': '^10.0.0',
+    '@types/express': '^5.0.0',
+    '@types/node': '^20.0.0',
+    typescript: '^5.0.0',
+  },
+}, null, 2),
       'tsconfig.json':
 `{
   "compilerOptions": {
