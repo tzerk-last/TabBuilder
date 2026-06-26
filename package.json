@@ -1,0 +1,93 @@
+{
+  "name": "framework-project-builder",
+  "displayName": "Framework Project Builder",
+  "description": "Crea proyectos con estructura profesional para Java, Python, C#, PHP y JavaScript/TypeScript. Incluye arquitecturas, base de datos y DevOps.",
+  "version": "3.2.0",
+  "publisher": "TzerK",
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "scaffold",
+    "boilerplate",
+    "generator",
+    "framework",
+    "spring boot",
+    "fastapi",
+    "laravel",
+    "nextjs",
+    "dotnet"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tzerk-last/framework-project-builder"
+  },
+  "activationEvents": [],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "framework-builder.createProject",
+        "title": "Framework Builder: Crear Nuevo Proyecto",
+        "icon": "$(add)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "frameworkBuilder",
+          "title": "Framework Builder",
+          "icon": "$(symbol-namespace)"
+        }
+      ]
+    },
+    "views": {
+      "frameworkBuilder": [
+        {
+          "id": "frameworkBuilderView",
+          "name": "Crear Proyecto",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "framework-builder.createProject",
+          "when": "view == frameworkBuilderView",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "framework-builder.createProject",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "framework-builder.createProject",
+        "key": "ctrl+shift+n",
+        "mac": "cmd+shift+n"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.56.0"
+  }
+}

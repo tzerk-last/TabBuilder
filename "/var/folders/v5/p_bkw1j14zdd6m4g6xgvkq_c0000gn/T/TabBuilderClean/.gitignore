@@ -1,0 +1,14 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+.vscode/
+*.suo
+*.ncrunchproject
+[Pp]ackages/
+*.nupkg
+
+# OS
+.DS_Store
+Thumbs.db
