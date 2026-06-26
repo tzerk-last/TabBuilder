@@ -15,6 +15,7 @@ const TOOL_DEFINITIONS = {
   mvn:      { command: ['mvn', '--version'], name: 'Maven', installHint: 'https://maven.apache.org/download.cgi' },
   gradle:   { command: ['gradle', '--version'], name: 'Gradle', installHint: 'https://gradle.org/install/' },
   composer: { command: ['composer', '--version'], name: 'Composer', installHint: 'https://getcomposer.org/download' },
+  php:      { command: ['php', '--version'], name: 'PHP', installHint: 'https://www.php.net/downloads' },
   ng:       { command: ['ng', '--version'], name: 'Angular CLI', installHint: 'https://angular.io/cli' },
   nest:     { command: ['nest', '--version'], name: 'Nest CLI', installHint: 'https://docs.nestjs.com/cli/overview' },
 };

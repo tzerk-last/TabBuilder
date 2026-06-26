@@ -49,6 +49,18 @@ const REGISTRY = {
     const { AspNetCleanOfficialGenerator } = require('./generators/aspnet/clean/OfficialGenerator');
     return new AspNetCleanOfficialGenerator();
   },
+  'laravel/mvc': () => {
+    const { LaravelMvcOfficialGenerator } = require('./generators/laravel/OfficialGenerator');
+    return new LaravelMvcOfficialGenerator();
+  },
+  'laravel/api': () => {
+    const { LaravelApiOfficialGenerator } = require('./generators/laravel/OfficialGenerator');
+    return new LaravelApiOfficialGenerator();
+  },
+  'laravel/clean': () => {
+    const { LaravelCleanOfficialGenerator } = require('./generators/laravel/OfficialGenerator');
+    return new LaravelCleanOfficialGenerator();
+  },
 };
 
 module.exports = { REGISTRY };

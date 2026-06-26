@@ -120,7 +120,91 @@ async function buildProject(config) {
   if (FrameworkFactory.has(frameworkId, architectureId)) {
     logger.info(`Using v4 generator for "${frameworkId}/${architectureId}"`);
     const generator = FrameworkFactory.get(frameworkId, architectureId);
-    return generator.generate(config, { logger });
+    const result = await generator.generate(config, { logger });
+    if (!result.success) {
+      return result;
+    }
+
+    const projectPath = result.projectPath || path.join(targetFolder, projectName);
+    const filesWritten = Array.isArray(result.filesWritten) ? [...result.filesWritten] : [];
+    let failedAt = '';
+
+    try {
+      // Architecture step is optional and additive. It may create extra files for
+      // clean/api architectures without changing the core Laravel scaffolding.
+      if (architectureId && architectureId !== 'mvc' && architectureId !== 'none') {
+        try {
+          const arch = require('../architecture/index');
+          if (arch && typeof arch.ArchitectureFactory === 'function') {
+            const factory = new arch.ArchitectureFactory();
+            const plan = factory.create(architectureId, {
+              projectName,
+              framework: frameworkId,
+              lang: framework.lang,
+              options: { database: database || null },
+            });
+            const res = arch.writeArchitectureFiles(plan, projectPath);
+            if (res && Array.isArray(res.written)) filesWritten.push(...res.written);
+            logger.info(`Architecture "${architectureId}" applied: ${res?.written?.length ?? 0} files`);
+          }
+        } catch (archErr) {
+          logger.warn(`Architecture step skipped (${architectureId}): ${archErr.message}`);
+        }
+      }
+
+      // DevOps files are optional and additive; do not override existing files.
+      if (devops && devops !== 'none') {
+        try {
+          failedAt = `archivos DevOps (${devops})`;
+          const devopsFiles = generateDevOpsFiles({
+            projectName,
+            lang: framework.lang,
+            port: framework.port,
+            devops,
+          });
+          const { written } = writeDevOpsFiles(devopsFiles, projectPath);
+          filesWritten.push(...written);
+          logger.info(`DevOps "${devops}": ${written.length} written`);
+        } catch (devopsErr) {
+          logger.warn(`DevOps step failed (${devops}): ${devopsErr.message}`);
+        }
+      }
+
+      try {
+        failedAt = 'README.md';
+        const readmePath = path.join(projectPath, 'README.md');
+        if (!fs.existsSync(readmePath)) {
+          const readme = generateReadme(projectName, frameworkId, architectureId, database, devops);
+          fs.writeFileSync(readmePath, readme);
+          filesWritten.push('README.md');
+        }
+      } catch (readmeErr) {
+        logger.warn(`README.md skipped: ${readmeErr.message}`);
+      }
+
+      try {
+        failedAt = '.gitignore';
+        const gitignorePath = path.join(projectPath, '.gitignore');
+        if (!fs.existsSync(gitignorePath)) {
+          fs.writeFileSync(gitignorePath, getGitignore(framework.lang));
+          filesWritten.push('.gitignore');
+        }
+      } catch (giErr) {
+        logger.warn(`.gitignore skipped: ${giErr.message}`);
+      }
+
+      return { success: true, projectPath, filesWritten };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error(`Build failed at "${failedAt}": ${msg}`);
+      return {
+        success: false,
+        projectPath,
+        filesWritten,
+        failedAt,
+        error: msg,
+      };
+    }
   }
 
   const projectPath = path.join(targetFolder, projectName);
