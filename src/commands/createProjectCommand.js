@@ -60,7 +60,7 @@ class FrameworkBuilderViewProvider {
   async _handlePickFolder(post) {
     try {
       const selected = await vscode.window.showOpenDialog({
-        canSelectFolders: true, canSelectFiles: false, openLabel: 'Seleccionar carpeta destino',
+        canSelectFolders: true, canSelectFiles: false, openLabel: 'Select destination folder',
       });
       if (selected && selected.length > 0) {
         post({ command: 'folderSelected', path: selected[0].fsPath });
@@ -102,7 +102,7 @@ class FrameworkBuilderViewProvider {
 
       const framework = getFramework(frameworkId);
       if (!framework) {
-        post({ command: 'error', text: `Framework "${frameworkId}" no encontrado.` });
+        post({ command: 'error', text: `Framework "${frameworkId}" not found.` });
         return;
       }
 
@@ -122,7 +122,7 @@ class FrameworkBuilderViewProvider {
 
       if (!buildResult.success) {
         post({ command: 'step', id: 'structure', state: 'error' });
-        post({ command: 'error', text: buildResult.error || 'Error al crear el proyecto.' });
+        post({ command: 'error', text: buildResult.error || 'Failed to create project.' });
 
         // Offer rollback if any files were created before the failure
         if (buildResult.filesWritten.length > 0) {
@@ -185,7 +185,7 @@ class FrameworkBuilderViewProvider {
 
       post({
         command: 'error',
-        text: `Error inesperado:\n${msg_}\n\nRevisa el Output Channel "Framework Project Builder" para más detalles.`,
+        text: `Unexpected error:\n${msg_}\n\nCheck the "TabBuilder" Output Channel for details.`,
       });
 
       // Offer rollback if we had started creating files

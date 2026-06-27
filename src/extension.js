@@ -10,7 +10,7 @@ const { logger } = require('./services/logger');
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-  logger.info('Framework Project Builder activated');
+  logger.info('TabBuilder activated');
 
   const provider = new FrameworkBuilderViewProvider(context.extensionUri, context);
 
@@ -25,7 +25,7 @@ function activate(context) {
 }
 
 function deactivate() {
-  logger.info('Framework Project Builder deactivated');
+  logger.info('TabBuilder deactivated');
 }
 
 module.exports = { activate, deactivate };

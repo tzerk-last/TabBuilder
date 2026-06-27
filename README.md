@@ -1,4 +1,4 @@
-# Framework Project Builder
+# TabBuilder
 
 > Scaffold professional projects in seconds — right from VS Code.
 
@@ -15,7 +15,7 @@
 
 ## 🚀 Quickstart
 
-1. Open the **Framework Builder** panel in the activity bar (or press `Ctrl+Shift+N`)
+1. Open the **TabBuilder** panel in the activity bar (or press `Ctrl+Shift+N`)
 2. Enter a project name and select a folder
 3. Choose your framework, architecture, database and DevOps option
 4. Click **Generate project**
