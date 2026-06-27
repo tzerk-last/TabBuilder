@@ -1,22 +1,56 @@
 // @ts-check
 'use strict';
 
-const { JAVA_FRAMEWORKS } = require('./java');
-const { PYTHON_FRAMEWORKS } = require('./python');
-const { CSHARP_FRAMEWORKS } = require('./csharp');
-const { PHP_FRAMEWORKS } = require('./php');
-const { JS_FRAMEWORKS } = require('./js');
+const { SPRING_BOOT } = require('./spring-boot/template');
+const { QUARKUS } = require('./quarkus/template');
+const { MICRONAUT } = require('./micronaut/template');
+const { DJANGO } = require('./django/template');
+const { FASTAPI } = require('./fastapi/template');
+const { FLASK } = require('./flask/template');
+const { LITESTAR } = require('./litestar/template');
+const { ASPNET } = require('./aspnet/template');
+const { BLAZOR } = require('./blazor/template');
+const { LARAVEL } = require('./laravel/template');
+const { SYMFONY } = require('./symfony/template');
+const { NEXTJS } = require('./nextjs/template');
+const { REACT_VITE } = require('./react-vite/template');
+const { NESTJS } = require('./nestjs/template');
+const { EXPRESS } = require('./express/template');
+const { VUE_VITE } = require('./vue-vite/template');
+const { SVELTEKIT } = require('./sveltekit/template');
+const { ASTRO } = require('./astro/template');
+const { NUXT3 } = require('./nuxt3/template');
+const { HONO } = require('./hono/template');
+const { ANGULAR } = require('./angular/template');
 
 /**
- * All available framework templates, keyed by their ID.
+ * All available framework templates, keyed by their ID. Each framework lives
+ * in its own isolated folder (./<id>/template.js) instead of being grouped
+ * by language.
  * @type {Record<string, import('../types').FrameworkTemplate>}
  */
 const FRAMEWORKS = {
-  ...JAVA_FRAMEWORKS,
-  ...PYTHON_FRAMEWORKS,
-  ...CSHARP_FRAMEWORKS,
-  ...PHP_FRAMEWORKS,
-  ...JS_FRAMEWORKS,
+  'spring-boot': SPRING_BOOT,
+  quarkus: QUARKUS,
+  micronaut: MICRONAUT,
+  django: DJANGO,
+  fastapi: FASTAPI,
+  flask: FLASK,
+  litestar: LITESTAR,
+  aspnet: ASPNET,
+  blazor: BLAZOR,
+  laravel: LARAVEL,
+  symfony: SYMFONY,
+  nextjs: NEXTJS,
+  'react-vite': REACT_VITE,
+  nestjs: NESTJS,
+  express: EXPRESS,
+  'vue-vite': VUE_VITE,
+  sveltekit: SVELTEKIT,
+  astro: ASTRO,
+  nuxt3: NUXT3,
+  hono: HONO,
+  angular: ANGULAR,
 };
 
 /**

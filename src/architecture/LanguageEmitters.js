@@ -409,7 +409,7 @@ const EMITTERS = {
         .filter((r) => r && r.layerPath && r.name !== selfName)
         .map((r) => this.importFor(r));
     },
-    iface(_ctx, { name, layerPath, methods = [], refs = [] }) {
+    iface(_ctx, { name, _layerPath, methods = [], refs = [] }) {
       const needsOptional = methods.some((m) => m.nullableReturn);
       const body = methods.length
         ? methods.map((m) => `    @abstractmethod\n    ${this.methodSignature(m)}: ...`).join('\n\n')
@@ -440,7 +440,7 @@ const EMITTERS = {
         return `    ${sig}:\n        raise NotImplementedError`;
       }).join('\n\n');
     },
-    service(_ctx, { name, layerPath, iface, ifaceRef, deps = [], ifaceMethods = [], typeRefs = [] }) {
+    service(_ctx, { name, _layerPath, iface, ifaceRef, deps = [], ifaceMethods = [], typeRefs = [] }) {
       const ctorArgs = deps.map((d) => `${d.field}: ${d.type}`).join(', ');
       const assigns = deps.map((d) => `        self._${d.field} = ${d.field}`).join('\n')
         || '        pass';
@@ -455,7 +455,7 @@ const EMITTERS = {
       ]);
       return `${importBlock}class ${name}${base}:\n    def __init__(self${ctorArgs ? ', ' + ctorArgs : ''}) -> None:\n${assigns}${stubs}\n`;
     },
-    repo(_ctx, { name, layerPath, iface, ifaceRef, ifaceMethods = [], typeRefs = [] }) {
+    repo(_ctx, { name, _layerPath, iface, ifaceRef, ifaceMethods = [], typeRefs = [] }) {
       const base = iface ? `(${iface})` : '';
       const body = ifaceMethods.length
         ? this.stubMethods(ifaceMethods) + '\n\n    # TODO: persistencia (SQLAlchemy, etc.)'

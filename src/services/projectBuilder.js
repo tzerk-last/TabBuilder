@@ -8,7 +8,7 @@ const { getFramework } = require('../frameworks/index');
 const { generateDevOpsFiles, writeDevOpsFiles } = require('../devops/generator');
 const { generateReadme } = require('../templates/readme');
 const { getGitignore } = require('../templates/gitignore');
-const { FrameworkFactory } = require('../frameworks/v2/FrameworkFactory');
+const { FrameworkFactory } = require('../frameworks/FrameworkFactory');
 
 /**
  * @typedef {Object} BuildResult
@@ -71,19 +71,6 @@ function patchNestJsPackageJson(projectPath) {
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
   JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-}
-
-/**
- * @param {string} src
- * @param {string} dst
- */
-function copyFile(src, dst) {
-  const rel = path.basename(dst);
-  try {
-    fs.copyFileSync(src, dst);
-  } catch (err) {
-    throw new Error(`No fue posible copiar "${rel}".\n\nMotivo: ${err.message}`);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

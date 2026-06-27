@@ -104,7 +104,6 @@ function isNoiseLine(line) {
 
 /** @param {string} raw  Combined stdout+stderr from a failed run */
 function classifyNetworkError(raw) {
-  const text = raw.toLowerCase();
   if (/name or service not known|nodename nor servname|temporary failure in name resolution|could not resolve host/i.test(raw))
     return 'dns';
   if (/connection timed out|timed out|read timeout|connection timeout/i.test(raw))
@@ -127,10 +126,9 @@ function classifyNetworkError(raw) {
 /**
  * Returns a user-friendly network error message.
  * @param {string} networkType
- * @param {string} installCmd
  * @returns {string}
  */
-function networkErrorMessage(networkType, installCmd) {
+function networkErrorMessage(networkType, _installCmd) {
   const msgs = {
     dns:         'No se pudo resolver el servidor de paquetes (DNS).',
     timeout:     'La conexión tardó demasiado tiempo (timeout).',
@@ -237,7 +235,7 @@ function run(cmd, args, cwd, onData, env, timeoutMs = 5 * 60 * 1000) {
 
     const timer = setTimeout(() => {
       logger.warn(`Timeout (${timeoutMs}ms) killed: ${cmd} ${args.join(' ')}`);
-      try { child.kill('SIGTERM'); } catch (_) {}
+      try { child.kill('SIGTERM'); } catch (_) { /* intentional */ }
       settle({ ok: false, code: null, stdout, stderr: 'Tiempo de espera agotado.', timedOut: true });
     }, timeoutMs);
   });

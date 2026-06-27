@@ -496,7 +496,7 @@ ${steps}
               command: 'buildAndPush'
               tags: |
                 latest
-                \$(Build.BuildId)
+                $(Build.BuildId)
 `;
 }
 
