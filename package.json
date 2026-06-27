@@ -1,10 +1,15 @@
 {
-  "name": "framework-project-builder",
+  "name": "tabbuilder",
   "displayName": "TabBuilder",
-  "description": "Crea proyectos con estructura profesional para Java, Python, C#, PHP y JavaScript/TypeScript. Incluye arquitecturas, base de datos y DevOps.",
+  "description": "Enterprise Project Generator for Visual Studio Code. Generate production-ready projects using official CLIs and best practices — Spring Boot, FastAPI, Laravel, ASP.NET, Next.js and 16 more.",
   "version": "3.2.0",
-  "publisher": "TzerK",
+  "publisher": "Meikuto",
+  "author": {
+    "name": "Meikuto",
+    "url": "https://meikuto.dev"
+  },
   "license": "MIT",
+  "homepage": "https://meikuto.dev",
   "icon": "assets/icon.png",
   "engines": {
     "vscode": "^1.85.0"
@@ -15,6 +20,8 @@
     "Programming Languages"
   ],
   "keywords": [
+    "tabbuilder",
+    "meikuto",
     "scaffold",
     "boilerplate",
     "generator",
@@ -23,36 +30,41 @@
     "fastapi",
     "laravel",
     "nextjs",
-    "dotnet"
+    "dotnet",
+    "enterprise",
+    "project generator"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/tzerk-last/framework-project-builder"
+    "url": "https://github.com/TzerK-LAST/TabBuilder"
+  },
+  "bugs": {
+    "url": "https://github.com/TzerK-LAST/TabBuilder/issues"
   },
   "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "framework-builder.createProject",
-        "title": "Framework Builder: Crear Nuevo Proyecto",
+        "command": "tabbuilder.createProject",
+        "title": "TabBuilder: Create New Project",
         "icon": "$(add)"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "frameworkBuilder",
-          "title": "Framework Builder",
+          "id": "tabbuilder",
+          "title": "TabBuilder",
           "icon": "$(symbol-namespace)"
         }
       ]
     },
     "views": {
-      "frameworkBuilder": [
+      "tabbuilder": [
         {
-          "id": "frameworkBuilderView",
-          "name": "Crear Proyecto",
+          "id": "tabbuilderView",
+          "name": "Create Project",
           "type": "webview"
         }
       ]
@@ -60,21 +72,21 @@
     "menus": {
       "view/title": [
         {
-          "command": "framework-builder.createProject",
-          "when": "view == frameworkBuilderView",
+          "command": "tabbuilder.createProject",
+          "when": "view == tabbuilderView",
           "group": "navigation"
         }
       ],
       "explorer/context": [
         {
-          "command": "framework-builder.createProject",
+          "command": "tabbuilder.createProject",
           "group": "navigation"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "framework-builder.createProject",
+        "command": "tabbuilder.createProject",
         "key": "ctrl+shift+n",
         "mac": "cmd+shift+n"
       }

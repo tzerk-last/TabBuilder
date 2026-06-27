@@ -24,7 +24,7 @@ class Logger {
   get channel() {
     if (vscode && vscode.window) {
       if (!this._channel) {
-        this._channel = vscode.window.createOutputChannel('Framework Project Builder');
+        this._channel = vscode.window.createOutputChannel('TabBuilder');
       }
       return this._channel;
     }

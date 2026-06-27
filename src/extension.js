@@ -3,7 +3,7 @@
 
 const vscode = require('vscode');
 
-const { FrameworkBuilderViewProvider } = require('./commands/createProjectCommand');
+const { TabBuilderViewProvider } = require('./commands/createProjectCommand');
 const { logger } = require('./services/logger');
 
 /**
@@ -12,12 +12,12 @@ const { logger } = require('./services/logger');
 function activate(context) {
   logger.info('TabBuilder activated');
 
-  const provider = new FrameworkBuilderViewProvider(context.extensionUri, context);
+  const provider = new TabBuilderViewProvider(context.extensionUri, context);
 
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider('frameworkBuilderView', provider),
-    vscode.commands.registerCommand('framework-builder.createProject', () => {
-      vscode.commands.executeCommand('frameworkBuilderView.focus');
+    vscode.window.registerWebviewViewProvider('tabbuilderView', provider),
+    vscode.commands.registerCommand('tabbuilder.createProject', () => {
+      vscode.commands.executeCommand('tabbuilderView.focus');
     }),
     // Dispose the Output Channel on deactivation
     { dispose: () => logger.dispose() },

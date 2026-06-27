@@ -11,12 +11,12 @@ const { getFramework }                         = require('../frameworks/index');
 const { logger }                               = require('../services/logger');
 
 /**
- * Webview view provider for the "Crear Proyecto" panel. Owns the webview
+ * Webview view provider for the TabBuilder panel. Owns the webview
  * lifecycle and routes its messages into the build/install services — the
  * webview itself (./ui/webview.js) only renders HTML and posts/receives
  * messages, it has no business logic.
  */
-class FrameworkBuilderViewProvider {
+class TabBuilderViewProvider {
   /**
    * @param {vscode.Uri} extensionUri
    * @param {vscode.ExtensionContext} context
@@ -109,7 +109,7 @@ class FrameworkBuilderViewProvider {
       logger.startSession(projectName, frameworkId);
 
       // ── 2. Create file structure ─────────────────────────────────────────────
-      post({ command: 'step', id: 'structure', label: 'Creando estructura…', state: 'running' });
+      post({ command: 'step', id: 'structure', label: 'Creating project structure…', state: 'running' });
 
       const buildResult = await buildProject({
         name: projectName, frameworkId,
@@ -135,11 +135,11 @@ class FrameworkBuilderViewProvider {
       post({ command: 'step', id: 'structure', state: 'done' });
 
       const devopsState = (devops && devops !== 'none') ? 'done' : 'skip';
-      post({ command: 'step', id: 'devops', label: 'Configurando DevOps…', state: devopsState });
+      post({ command: 'step', id: 'devops', label: 'Configuring DevOps…', state: devopsState });
 
       // ── 3. Install dependencies (non-fatal) ──────────────────────────────────
       if (requiresInstall(framework.lang)) {
-        post({ command: 'step', id: 'install', label: 'Instalando dependencias…', state: 'running' });
+        post({ command: 'step', id: 'install', label: 'Installing dependencies…', state: 'running' });
 
         const installResult = await installDependencies({
           projectPath: buildResult.projectPath,
@@ -172,7 +172,7 @@ class FrameworkBuilderViewProvider {
       }
 
       // ── 4. Done ──────────────────────────────────────────────────────────────
-      post({ command: 'step', id: 'verify', label: 'Verificando proyecto…', state: 'done' });
+      post({ command: 'step', id: 'verify', label: 'Verifying project…', state: 'done' });
       succeeded = true;
       post({ command: 'success', path: buildResult.projectPath });
 
@@ -196,4 +196,4 @@ class FrameworkBuilderViewProvider {
   }
 }
 
-module.exports = { FrameworkBuilderViewProvider };
+module.exports = { TabBuilderViewProvider };

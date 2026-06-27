@@ -156,7 +156,7 @@ function generateReadme(projectName, frameworkId, architectureId = 'mvc', databa
   const data = README_DATA[frameworkId];
 
   if (!data) {
-    return `# ${projectName}\n\nProyecto generado con **${frameworkId}**.\n\n## Licencia\n\nMIT\n`;
+    return `# ${projectName}\n\nGenerated with **${frameworkId}** via TabBuilder.\n\n## License\n\nMIT\n`;
   }
 
   const techList = data.tech.map(t => `- ${t}`).join('\n');
@@ -173,7 +173,7 @@ function generateReadme(projectName, frameworkId, architectureId = 'mvc', databa
 
   return `# ${projectName}
 
-Proyecto generado con **Framework Project Builder**.
+Generated with **TabBuilder** by [Meikuto](https://meikuto.dev).
 
 ## 🛠 Tecnologías
 
