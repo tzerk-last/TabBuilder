@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { buildDatabaseService, buildK8sDatabaseUrl } = require('./DatabaseConfigBuilder');
 
 // ── Dockerfile templates ──────────────────────────────────────────────────────
 
@@ -75,85 +76,12 @@ CMD ["php", "-S", "0.0.0.0:${port}", "-t", "public"]
  * @param {'node'|'python'|'java'|'dotnet'|'php'} appType
  * @param {string} projectName
  * @param {number} port
+ * @param {string} database - 'postgresql', 'mysql', 'sqlite', 'mongodb', or 'none'
  * @returns {string}
  */
-function buildDockerCompose(appType, projectName, port) {
-  const slug = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-  const dbServices = {
-    node: `
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${slug}
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
-`,
-    python: `
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${slug}
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
-`,
-    java: `
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${slug}
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
-`,
-    dotnet: `
-  db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "Dev@123456"
-    ports:
-      - "1433:1433"
-`,
-    php: `
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_DATABASE: ${slug}
-      MYSQL_USER: dev
-      MYSQL_PASSWORD: dev
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysqldata:/var/lib/mysql
-
-volumes:
-  mysqldata:
-`,
-  };
-
-  const dbService = dbServices[appType] || dbServices.node;
+function buildDockerCompose(appType, projectName, port, database = 'none') {
+  const dbService = buildDatabaseService(database, projectName);
+  const dependsOn = (database && database !== 'none') ? '\n    depends_on:\n      - db' : '';
 
   return `services:
   app:
@@ -161,9 +89,7 @@ volumes:
     ports:
       - "${port}:${port}"
     env_file:
-      - .env
-    depends_on:
-      - db
+      - .env${dependsOn}
     volumes:
       - .:/app
 ${dbService}`;
@@ -308,17 +234,23 @@ data:
 
 /**
  * @param {string} projectName
+ * @param {string} database - 'postgresql', 'mysql', 'sqlite', 'mongodb', or 'none'
  * @returns {string}
  */
-function buildK8sSecrets(projectName) {
+function buildK8sSecrets(projectName, database = 'none') {
   const name = projectName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const databaseUrl = buildK8sDatabaseUrl(database, name);
+  const secretData = databaseUrl
+    ? `  DATABASE_URL: "${databaseUrl}"`
+    : `  # No database configured`;
+
   return `apiVersion: v1
 kind: Secret
 metadata:
   name: ${name}-secrets
 type: Opaque
 stringData:
-  DATABASE_URL: "postgres://user:password@db:5432/${name}"
+${secretData}
   SECRET_KEY: "change-me-in-production"
 `;
 }
@@ -518,18 +450,19 @@ function langToAppType(lang) {
  *   projectName: string,
  *   lang: 'java'|'python'|'csharp'|'php'|'js',
  *   port: number,
+ *   database?: string,
  *   devops: import('../types').DevOpsOption
  * }} config
  * @returns {Record<string, string>} Map of relative file path → content
  */
-function generateDevOpsFiles({ projectName, lang, port, devops }) {
+function generateDevOpsFiles({ projectName, lang, port, database = 'none', devops }) {
   const appType = langToAppType(lang);
   /** @type {Record<string, string>} */
   const files = {};
 
   if (devops === 'docker') {
     files['Dockerfile'] = buildDockerfile(appType, projectName, port);
-    files['docker-compose.yml'] = buildDockerCompose(appType, projectName, port);
+    files['docker-compose.yml'] = buildDockerCompose(appType, projectName, port, database);
     files['.dockerignore'] = buildDockerIgnore(appType);
   }
 
@@ -540,7 +473,7 @@ function generateDevOpsFiles({ projectName, lang, port, devops }) {
     files['k8s/service.yaml'] = buildK8sService(projectName, port);
     files['k8s/ingress.yaml'] = buildK8sIngress(projectName);
     files['k8s/configmap.yaml'] = buildK8sConfigMap(projectName);
-    files['k8s/secrets.yaml'] = buildK8sSecrets(projectName);
+    files['k8s/secrets.yaml'] = buildK8sSecrets(projectName, database);
   }
 
   if (devops === 'github-actions') {

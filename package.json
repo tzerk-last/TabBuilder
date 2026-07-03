@@ -1,9 +1,9 @@
 {
-  "name": "tabbuilder",
-  "displayName": "TabBuilder",
+  "name":"tabbuilder-pro",
+  "displayName": "TabBuilder Develop",
   "description": "Enterprise Project Generator for Visual Studio Code. Generate production-ready projects using official CLIs and best practices — Spring Boot, FastAPI, Laravel, ASP.NET, Next.js and 16 more.",
   "version": "3.2.0",
-  "publisher": "Meikuto",
+  "publisher": "wenjin",
   "author": {
     "name": "Meikuto",
     "url": "https://meikuto.dev"

@@ -6,6 +6,7 @@ const path = require('path');
 const { logger } = require('./logger');
 const { getFramework } = require('../frameworks/index');
 const { generateDevOpsFiles, writeDevOpsFiles } = require('../devops/generator');
+const { generateEnvExampleForFramework } = require('../devops/EnvGenerator');
 const { generateReadme } = require('../templates/readme');
 const { getGitignore } = require('../templates/gitignore');
 const { FrameworkFactory } = require('../frameworks/FrameworkFactory');
@@ -55,6 +56,38 @@ function writeFile(filePath, content) {
     fs.writeFileSync(filePath, content, 'utf-8');
   } catch (err) {
     throw new Error(`No fue posible crear el archivo "${rel}".\n\nMotivo: ${err.message}`);
+  }
+}
+
+/**
+ * Updates .env.example content based on selected database.
+ * Non-fatal — logs warnings if fails.
+ * @param {string} projectPath
+ * @param {string} frameworkId
+ * @param {string} projectName
+ * @param {string} database
+ */
+function updateEnvExample(projectPath, frameworkId, projectName, database) {
+  try {
+    const envPath = path.join(projectPath, '.env.example');
+    if (!fs.existsSync(envPath)) {
+      return; // No .env.example to update
+    }
+
+    if (database === 'none') {
+      return; // No database selected, keep template default
+    }
+
+    const envContent = generateEnvExampleForFramework(frameworkId, projectName, database);
+    if (!envContent) {
+      return; // Framework not supported, keep default
+    }
+
+    fs.writeFileSync(envPath, envContent, 'utf-8');
+    logger.debug(`Updated .env.example for ${frameworkId} with database: ${database}`);
+  } catch (err) {
+    // Non-fatal — don't break the build
+    logger.warn(`Could not update .env.example: ${err.message}`);
   }
 }
 
@@ -132,6 +165,9 @@ async function buildProject(config) {
     let failedAt = '';
 
     try {
+      // Update .env.example with database configuration (before architecture/devops steps)
+      updateEnvExample(projectPath, frameworkId, projectName, database);
+
       // Architecture step is optional and additive. It may create extra files for
       // clean/api architectures without changing the core Laravel scaffolding.
       if (architectureId && architectureId !== 'mvc' && architectureId !== 'none') {
@@ -162,6 +198,7 @@ async function buildProject(config) {
             projectName,
             lang: framework.lang,
             port: framework.port,
+            database: database || 'none',
             devops,
           });
           const { written } = writeDevOpsFiles(devopsFiles, projectPath);
@@ -243,6 +280,9 @@ async function buildProject(config) {
       patchNestJsPackageJson(projectPath);
     }
 
+    // ── 3b. Update .env.example with database configuration ───────────────────
+    updateEnvExample(projectPath, frameworkId, projectName, database);
+
     // ── 4. Architecture patterns (optional, additive, never fatal) ───────────
     if (architectureId && architectureId !== 'mvc' && architectureId !== 'none') {
       try {
@@ -268,7 +308,7 @@ async function buildProject(config) {
       try {
         failedAt = `archivos DevOps (${devops})`;
         const devopsFiles = generateDevOpsFiles({
-          projectName, lang: framework.lang, port: framework.port, devops,
+          projectName, lang: framework.lang, port: framework.port, database: database || 'none', devops,
         });
         const { written, skipped } = writeDevOpsFiles(devopsFiles, projectPath);
         filesWritten.push(...written);

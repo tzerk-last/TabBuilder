@@ -6,6 +6,7 @@ const path = require('path');
 const { BaseFrameworkGenerator } = require('../shared/BaseFrameworkGenerator');
 const { RuntimeFacade } = require('../RuntimeFacade');
 const { generateDevOpsFiles, writeDevOpsFiles } = require('../../devops/generator');
+const { generateEnvExampleForFramework } = require('../../devops/EnvGenerator');
 const { getGitignore } = require('../../templates/gitignore');
 const { ASPNET_DOTNET_FRAMEWORK, ASPNET_DEFAULT_PORT } = require('../shared/versions');
 
@@ -64,10 +65,21 @@ class AspNetOfficialGenerator extends BaseFrameworkGenerator {
         filesWritten.push('.gitignore');
       }
 
+      // Update .env.example with database configuration
+      const database = String(config.database || 'none').trim();
+      const envContent = generateEnvExampleForFramework(this.frameworkId, projectName, database);
+      if (envContent) {
+        const envPath = path.join(projectPath, '.env.example');
+        if (fs.existsSync(envPath)) {
+          fs.writeFileSync(envPath, envContent, 'utf8');
+        }
+      }
+
       const devopsFiles = generateDevOpsFiles({
         projectName,
         lang: this.lang,
         port: ASPNET_DEFAULT_PORT,
+        database,
         devops: String(config.devops || 'none').trim(),
       });
       const { written } = writeDevOpsFiles(devopsFiles, projectPath);
