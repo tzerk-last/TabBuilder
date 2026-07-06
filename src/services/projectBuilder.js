@@ -137,9 +137,13 @@ function deleteTree(dirPath) {
  * and result.projectPath exists on disk.
  *
  * @param {import('../types').ProjectConfig} config
+ * @param {{ onOutput?: (line: string) => void }} [deps] Optional live-output
+ *   sink forwarded to v4 generators (Laravel/Spring Boot/ASP.NET) so their
+ *   real scaffolding commands (composer/curl/tar/dotnet) can stream output
+ *   to the caller's UI. Omitting it keeps the exact previous behavior.
  * @returns {Promise<BuildResult>}
  */
-async function buildProject(config) {
+async function buildProject(config, deps = {}) {
   const { name: projectName, frameworkId, architectureId, database, devops, targetFolder } = config;
 
   const framework = getFramework(frameworkId);
@@ -155,7 +159,7 @@ async function buildProject(config) {
   if (FrameworkFactory.has(frameworkId, architectureId)) {
     logger.info(`Using v4 generator for "${frameworkId}/${architectureId}"`);
     const generator = FrameworkFactory.get(frameworkId, architectureId);
-    const result = await generator.generate(config, { logger });
+    const result = await generator.generate(config, { logger, onOutput: deps.onOutput });
     if (!result.success) {
       return result;
     }

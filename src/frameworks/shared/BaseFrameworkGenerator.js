@@ -78,6 +78,10 @@ class BaseFrameworkGenerator {
    */
   async runOfficialGenerate(config, deps, build) {
     const runtime = deps.runtime || this.runtime || new RuntimeFacade({ logger: deps.logger });
+    // Optional live-output sink for runCommand() below — lets the caller
+    // stream real command output (composer/curl/tar/dotnet) to its own UI
+    // without changing what any of these commands do or how they're run.
+    this._onOutput = typeof deps.onOutput === 'function' ? deps.onOutput : null;
     const projectName = String(config.name || '').trim();
     const targetFolder = String(config.targetFolder || '').trim();
     const projectPath = path.join(targetFolder, projectName);
@@ -134,7 +138,11 @@ class BaseFrameworkGenerator {
    *   unaffected (behaves exactly as before).
    */
   async runCommand(runtime, cmd, args, cwd, filterFn = null) {
-    const result = await runtime.commandRunner.run(cmd, args, cwd, (line) => runtime.logger.info(line), null, undefined, filterFn);
+    const onOutput = this._onOutput;
+    const result = await runtime.commandRunner.run(cmd, args, cwd, (line) => {
+      runtime.logger.info(line);
+      if (onOutput) onOutput(line);
+    }, null, undefined, filterFn);
     if (!result.ok) {
       throw new Error(result.stderr.trim() || result.stdout.trim() || `${cmd} ${args.join(' ')} falló.`);
     }

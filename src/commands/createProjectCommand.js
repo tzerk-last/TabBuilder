@@ -43,6 +43,10 @@ class TabBuilderViewProvider {
     // pipeline finished. Replayed once the view becomes visible again.
     /** @type {Record<string, any> | null} */
     this._lastTerminalMessage = null;
+    // Reentrancy guard: a second 'create' message overlapping an in-flight
+    // one (e.g. a stale/duplicate send) would run two pipelines concurrently
+    // against the same post()/webview, interleaving their step/log messages.
+    this._generating = false;
   }
 
   /**
@@ -253,6 +257,12 @@ class TabBuilderViewProvider {
    * @param {(p: object) => void} post
    */
   async _handleCreate(msg, post) {
+    if (this._generating) {
+      post({ command: 'error', text: 'Ya hay una generación en curso. Espera a que termine antes de iniciar otra.' });
+      return;
+    }
+    this._generating = true;
+
     const { projectName, frameworkId, templateId, architectureId, database, devops, targetFolder } = msg;
 
     diagLog('pipeline:start', { projectName, frameworkId }); // TEMP: instrumentation
@@ -288,6 +298,12 @@ class TabBuilderViewProvider {
         database:       database        || 'none',
         devops:         devops          || 'none',
         targetFolder,
+      }, {
+        // Same message shape already used by the install-phase onOutput
+        // below — v4 generators (Laravel/Spring Boot/ASP.NET) run real
+        // commands (composer/curl/tar/dotnet) here, previously silent to
+        // the "Ver detalles" panel.
+        onOutput: (line) => post({ command: 'installLog', line }),
       });
 
       if (!buildResult.success) {
@@ -366,6 +382,8 @@ class TabBuilderViewProvider {
       if (!succeeded && buildPath) {
         try { await offerRollback(buildPath); } catch (_) { /* intentional */ }
       }
+    } finally {
+      this._generating = false;
     }
   }
 }

@@ -1086,6 +1086,12 @@ window.addEventListener('message', e => {
       break;
 
     case 'error':
+      // A step left in 'running' means the backend aborted (or crashed)
+      // while that stage was in flight — without this, its spinner would
+      // keep spinning forever even though the pipeline already stopped.
+      PIPELINE_STEPS.forEach(s => {
+        if (stepStates[s.id] === 'running') updateProgressStep(s.id, 'error');
+      });
       showToast('toast-gen', 'err', msg.text);
       document.getElementById('btnGenerate').disabled = false;
       document.getElementById('btnBack').disabled = false;

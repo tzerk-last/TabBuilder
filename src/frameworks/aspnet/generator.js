@@ -27,6 +27,10 @@ class AspNetOfficialGenerator extends BaseFrameworkGenerator {
   /** @param {import('../../types').ProjectConfig} config */
   async generate(config, deps = {}) {
     const runtime = deps.runtime || this.runtime || new RuntimeFacade({ logger: deps.logger });
+    // Optional live-output sink for scaffold()/runDotnet() below — mirrors
+    // BaseFrameworkGenerator.runOfficialGenerate(), which this class doesn't
+    // call (it has its own prologue), so it's set here instead.
+    this._onOutput = typeof deps.onOutput === 'function' ? deps.onOutput : null;
     const projectName = String(config.name || '').trim();
     const targetFolder = String(config.targetFolder || '').trim();
     const projectPath = path.join(targetFolder, projectName);
@@ -117,11 +121,12 @@ class AspNetOfficialGenerator extends BaseFrameworkGenerator {
       '--no-restore',
     ];
 
+    const onOutput = this._onOutput;
     const result = await runtime.commandRunner.run(
       'dotnet',
       args,
       projectPath,
-      (line) => runtime.logger.info(line),
+      (line) => { runtime.logger.info(line); if (onOutput) onOutput(line); },
     );
 
     if (!result.ok) {
@@ -135,7 +140,8 @@ class AspNetOfficialGenerator extends BaseFrameworkGenerator {
    * @param {string} cwd
    */
   async runDotnet(runtime, args, cwd) {
-    const result = await runtime.commandRunner.run('dotnet', args, cwd, (line) => runtime.logger.info(line));
+    const onOutput = this._onOutput;
+    const result = await runtime.commandRunner.run('dotnet', args, cwd, (line) => { runtime.logger.info(line); if (onOutput) onOutput(line); });
     if (!result.ok) {
       throw new Error(result.stderr.trim() || result.stdout.trim() || `dotnet ${args.join(' ')} failed.`);
     }
