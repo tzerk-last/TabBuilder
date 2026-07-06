@@ -13,6 +13,5 @@ CHANGELOG.md
 vsc-extension-quickstart.md
 .claude/**
 **/*.test.js
-src/services/diagLog.js
 src/services/selfTestVisibilityBug.js
 DATABASE_CONFIGURATION_REPORT.md
