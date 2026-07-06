@@ -247,7 +247,8 @@ function run(cmd, args, cwd, onData, env, timeoutMs = 5 * 60 * 1000) {
 
 /**
  * @typedef {{ name: string, installHint: string }} MissingTool
- * @typedef {{ ok: boolean, missing: MissingTool[] }} PreflightResult
+ * @typedef {{ id: string, name: string, available: boolean, version: string|null, installHint: string }} CheckedTool
+ * @typedef {{ ok: boolean, missing: MissingTool[], checked: CheckedTool[] }} PreflightResult
  */
 
 /** @type {Record<string, { name: string, installHint: string }>} */
@@ -270,33 +271,48 @@ const TOOL_META = {
  */
 function preflight(lang, frameworkId) {
   const missing = [];
+  const checked = [];
+
+  // Records the outcome of a probe() call already made — no extra spawns,
+  // same call count as before this function grew a `checked` field.
+  /** @param {keyof typeof TOOL_META} id @param {string|null} version */
+  const record = (id, version) => {
+    checked.push({ id, name: TOOL_META[id].name, available: Boolean(version), version: version || null, installHint: TOOL_META[id].installHint });
+    return Boolean(version);
+  };
 
   switch (lang) {
     case 'js':
-      if (!probe('node')) missing.push(TOOL_META.node);
-      if (!probe('npm'))  missing.push(TOOL_META.npm);
+      if (!record('node', probe('node'))) missing.push(TOOL_META.node);
+      if (!record('npm', probe('npm')))   missing.push(TOOL_META.npm);
       break;
-    case 'python':
-      if (!findPython()) missing.push(TOOL_META.python);
+    case 'python': {
+      const exe = findPython();
+      // findPython() already re-probes internally to validate it's really
+      // Python 3; re-reading its version here is one more probe of the
+      // resolved exe, purely for display — findPython() itself is unchanged.
+      const version = exe ? probe(exe) : null;
+      if (!record('python', version)) missing.push(TOOL_META.python);
       break;
+    }
     case 'csharp':
-      if (!probe('dotnet')) missing.push(TOOL_META.dotnet);
+      if (!record('dotnet', probe('dotnet'))) missing.push(TOOL_META.dotnet);
       break;
     case 'java':
-      if (!probe('java')) missing.push(TOOL_META.java);
+      if (!record('java', probe('java'))) missing.push(TOOL_META.java);
       if (['spring-boot', 'quarkus', 'micronaut'].includes(frameworkId)) {
-        if (!probe('mvn')) missing.push(TOOL_META.mvn);
+        if (!record('mvn', probe('mvn'))) missing.push(TOOL_META.mvn);
       }
       break;
     case 'php':
-      if (!probe('php')) missing.push(TOOL_META.php);
+      if (!record('php', probe('php'))) missing.push(TOOL_META.php);
       if (['laravel', 'symfony'].includes(frameworkId)) {
-        if (!probe('composer')) missing.push(TOOL_META.composer);
+        if (!record('composer', probe('composer'))) missing.push(TOOL_META.composer);
       }
       break;
   }
 
-  return { ok: missing.length === 0, missing };
+  return { ok: missing.length === 0, missing, checked };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -395,7 +411,7 @@ function failResult(cmd, result, manualCmd) {
       ok: false,
       isNetwork: false,
       manualCmd,
-      error: `Failed package:\n${pipFailure.package}\n\nReason:\n${pipFailure.reason}\n\nCommand executed:\n${cmd}\n\nPIP output:\n${raw}\n\nManual install commands:\n${formatPythonManualCommands()}`,
+      error: `Paquete con error:\n${pipFailure.package}\n\nMotivo:\n${pipFailure.reason}\n\nComando ejecutado:\n${cmd}\n\nSalida de pip:\n${raw}\n\nPuedes instalar las dependencias manualmente:\n${formatPythonManualCommands()}`,
     };
   }
 

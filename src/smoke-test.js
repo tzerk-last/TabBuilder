@@ -81,8 +81,8 @@ async function testSpringBoot() {
   const hasSpring = commandExists('spring');
   const hasCurl   = commandExists('curl');
   const hasWget   = commandExists('wget');
-  const hasUnzip  = commandExists('unzip', ['-v']);
-  const canGen    = hasSpring || ((hasCurl || hasWget) && hasUnzip);
+  const hasTar    = commandExists('tar', ['--version']);
+  const canGen    = hasSpring || ((hasCurl || hasWget) && hasTar);
 
   console.log('\n[Spring Boot]');
   await runCase('spring-boot/mvc', async () => {

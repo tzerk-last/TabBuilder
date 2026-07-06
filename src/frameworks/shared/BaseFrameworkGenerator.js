@@ -128,9 +128,13 @@ class BaseFrameworkGenerator {
    * @param {string} cmd
    * @param {string[]} args
    * @param {string} cwd
+   * @param {(line: string) => boolean} [filterFn] Optional — lines matching
+   *   this predicate are logged to the Output Channel only, not surfaced to
+   *   the caller's onData/UI stream. Existing callers that don't pass it are
+   *   unaffected (behaves exactly as before).
    */
-  async runCommand(runtime, cmd, args, cwd) {
-    const result = await runtime.commandRunner.run(cmd, args, cwd, (line) => runtime.logger.info(line));
+  async runCommand(runtime, cmd, args, cwd, filterFn = null) {
+    const result = await runtime.commandRunner.run(cmd, args, cwd, (line) => runtime.logger.info(line), null, undefined, filterFn);
     if (!result.ok) {
       throw new Error(result.stderr.trim() || result.stdout.trim() || `${cmd} ${args.join(' ')} falló.`);
     }

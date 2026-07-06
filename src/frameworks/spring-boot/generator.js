@@ -150,19 +150,41 @@ class SpringBootOfficialGenerator extends BaseFrameworkGenerator {
       params.set('bootVersion', springBootVersion);
     }
 
-    const url = `https://start.spring.io/starter.zip?${params.toString()}`;
+    // start.spring.io's own documented usage guide recommends `.tgz`
+    // (tar+gzip) over `.zip` for scripted/automated clients — verified: it's
+    // a real, live endpoint (Content-Disposition: starter.tar.gz), and `tar`
+    // extracts it natively on Windows 10/11, macOS AND every mainstream
+    // Linux distro. `.zip` only works on Windows/macOS, whose `tar` happens
+    // to be bsdtar (libarchive) — GNU tar, the default on Debian/Ubuntu/
+    // Mint/WSL2, cannot extract ZIP at all (confirmed empirically: `tar:
+    // This does not look like a tar archive`).
+    const url = `https://start.spring.io/starter.tgz?${params.toString()}`;
 
-    const zipPath = path.join(projectPath, 'starter.zip');
+    if (!runtime.commandRunner.probe('tar')) {
+      throw new Error(
+        'No se encontró "tar", necesario para generar proyectos Spring Boot mediante Spring Initializr ' +
+        '(start.spring.io). "tar" viene incluido en Windows 10/11, macOS y la mayoría de distribuciones ' +
+        'Linux; si tu sistema no lo tiene, instálalo con su gestor de paquetes.',
+      );
+    }
+
+    const archivePath = path.join(projectPath, 'starter.tar.gz');
     if (runtime.commandRunner.probe('curl')) {
-      await this.runCommand(runtime, 'curl', ['-L', url, '-o', zipPath], projectPath);
+      await this.runCommand(runtime, 'curl', ['-L', url, '-o', archivePath], projectPath);
     } else if (runtime.commandRunner.probe('wget')) {
-      await this.runCommand(runtime, 'wget', ['-O', zipPath, url], projectPath);
+      await this.runCommand(runtime, 'wget', ['-O', archivePath, url], projectPath);
     } else {
       throw new Error('No se encontró curl ni wget para descargar el proyecto Spring Boot.');
     }
 
-    await this.runCommand(runtime, 'unzip', ['-q', zipPath], projectPath);
-    fs.rmSync(zipPath, { force: true });
+    // GNU tar (Debian/Ubuntu/Mint) emits a harmless warning for a
+    // libarchive-specific metadata key it doesn't recognize; extraction
+    // still succeeds (exit code 0, all files present — verified). Filter
+    // only that exact, known-benign line — anything else from tar still
+    // surfaces normally, including real errors.
+    const isKnownBenignTarWarning = (line) => /Ignoring unknown extended header keyword ['"]LIBARCHIVE\./i.test(line);
+    await this.runCommand(runtime, 'tar', ['-xzf', archivePath], projectPath, isKnownBenignTarWarning);
+    fs.rmSync(archivePath, { force: true });
   }
 }
 

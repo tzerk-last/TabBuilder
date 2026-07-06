@@ -42,33 +42,42 @@ class CommandRunner {
   probe(exe, args = ['--version'], timeoutMs = 6000) {
     const env = this.buildEnv();
 
-    const tryProbe = (command, useShell) => {
+    // args must be spawnSync's real 2nd positional parameter (an array) —
+    // passing an options object there instead (as this used to) makes Node
+    // silently discard args and run `exe` with none, which several CLIs
+    // (node, python3, composer, php...) happily exit 0 for, yielding a
+    // garbage "version" instead of failing loudly. shell:true lets Node
+    // resolve platform-specific wrappers (.cmd/.bat on Windows) without any
+    // manual command-string quoting.
+    for (const shell of [false, true]) {
       try {
-        const result = spawnSync(command, useShell ? { stdio: 'pipe', shell: true, timeout: timeoutMs, encoding: 'utf8', env } : { stdio: 'pipe', shell: false, timeout: timeoutMs, encoding: 'utf8', env }, useShell ? undefined : args);
+        const result = spawnSync(exe, args, { stdio: 'pipe', shell, timeout: timeoutMs, encoding: 'utf8', env });
         if (result && result.status === 0 && !result.error) {
           return (result.stdout || result.stderr || '').trim().split('\n')[0] || exe;
         }
       } catch (_) {
         // ignore and try the next form
       }
-      return null;
-    };
-
-    const quotedArgs = args.map((arg) => {
-      if (/^[A-Za-z0-9_./:-]+$/.test(arg)) return arg;
-      return `"${String(arg).replace(/"/g, '\\"')}"`;
-    });
-
-    let result = tryProbe(exe, false);
-    if (result) return result;
-    result = tryProbe([exe, ...quotedArgs].join(' '), true);
-    return result;
+    }
+    return null;
   }
 
-  resolveExecutable(candidates, args = ['--version'], timeoutMs = 6000) {
+  /**
+   * Tries each candidate executable name in order and returns the first one
+   * that probes successfully — the single, central place for "this tool may
+   * be installed under different names depending on the OS/distro" (e.g.
+   * python3/python). Pass `validate` when a successful probe isn't proof
+   * enough on its own (e.g. a bare `python` that resolves to Python 2).
+   * @param {string[]} candidates
+   * @param {string[]} args
+   * @param {number} [timeoutMs]
+   * @param {(version: string) => boolean} [validate]
+   * @returns {string|null} the resolved candidate name, or null if none matched
+   */
+  resolveExecutable(candidates, args = ['--version'], timeoutMs = 6000, validate = null) {
     for (const candidate of candidates || []) {
       const version = this.probe(candidate, args, timeoutMs);
-      if (version) return candidate;
+      if (version && (!validate || validate(version))) return candidate;
     }
     return null;
   }
